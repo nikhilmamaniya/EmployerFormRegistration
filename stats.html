@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employment Mahakumbh Mela — Live Count</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --navy:#182849;
+    --navy-deep:#0f1a30;
+    --saffron:#dd8a2e;
+    --saffron-deep:#b96e1c;
+    --paper:#f7f5f0;
+    --line:#d9d3c7;
+    --muted:#6b6a66;
+    --success-ink:#2f6f4e;
+    --error:#a33d2c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.5;
+  }
+  .masthead{
+    background:var(--navy);
+    color:#fff;
+    text-align:center;
+    padding:30px 20px 26px;
+    border-bottom:3px solid var(--saffron);
+  }
+  .masthead h1{
+    font-family:'Source Serif 4',serif;
+    font-weight:600;
+    font-size:clamp(22px,4.2vw,29px);
+    margin:0 0 6px;
+  }
+  .masthead p{
+    margin:0;
+    color:#e7cfa0;
+    font-size:14px;
+  }
+
+  main{
+    max-width:640px;
+    margin:0 auto;
+    padding:40px 20px 60px;
+  }
+
+  .live-bar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    font-size:12.5px;
+    color:var(--muted);
+    margin-bottom:24px;
+    flex-wrap:wrap;
+  }
+  .live-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:#9a9488;
+    flex:0 0 auto;
+  }
+  .live-dot.on{ background:var(--success-ink); }
+  .live-dot.off{ background:var(--error); }
+  .refresh-btn{
+    background:#fff;
+    border:1px solid var(--line);
+    color:var(--navy);
+    font-size:12px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:20px;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .refresh-btn:hover{ background:#f0ede5; }
+  .refresh-btn:disabled{ opacity:.6; cursor:default; }
+
+  .hero-stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-bottom:12px;
+  }
+  @media (max-width:480px){ .hero-stats{grid-template-columns:1fr;} }
+
+  .stat-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:26px 22px;
+    text-align:center;
+  }
+  .stat-number{
+    font-family:'Source Serif 4',serif;
+    font-weight:700;
+    font-size:44px;
+    color:var(--navy);
+    line-height:1;
+  }
+  .stat-label{
+    margin-top:8px;
+    font-size:13.5px;
+    color:var(--muted);
+  }
+  .stat-sub{
+    margin-top:4px;
+    font-size:11.5px;
+    color:var(--muted);
+  }
+  .stat-card.accent .stat-number{color:var(--saffron-deep);}
+
+  .updated-line{
+    text-align:center;
+    font-size:12.5px;
+    color:var(--muted);
+    margin-bottom:36px;
+  }
+
+  h2.section-title{
+    font-family:'Source Serif 4',serif;
+    font-weight:600;
+    font-size:17px;
+    color:var(--navy);
+    border-bottom:1px solid var(--line);
+    padding-bottom:8px;
+    margin:0 0 16px;
+  }
+
+  table.company-table{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  table.company-table th, table.company-table td{
+    text-align:left;
+    padding:12px 14px;
+    font-size:14px;
+    border-bottom:1px solid var(--line);
+  }
+  table.company-table th{
+    background:#f0ede5;
+    color:var(--navy);
+    font-weight:600;
+    font-size:12.5px;
+  }
+  table.company-table td.count{
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+    font-weight:600;
+    color:var(--navy);
+  }
+  table.company-table tr:last-child td{border-bottom:none;}
+
+  .empty-note{
+    font-size:13.5px;
+    color:var(--muted);
+    padding:16px 0;
+  }
+
+  .fallback-note{
+    background:#fbeae6;
+    border:1px solid #edc3b8;
+    color:var(--error);
+    border-radius:4px;
+    padding:10px 14px;
+    font-size:12.8px;
+    text-align:center;
+    margin-bottom:24px;
+    display:none;
+  }
+  .fallback-note.show{ display:block; }
+
+  footer{
+    text-align:center;
+    font-size:12px;
+    color:var(--muted);
+    padding:28px 20px 40px;
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <h1>Employment Mahakumbh Mela</h1>
+  <p>S.I.W.S. College · 29 September 2026 · Registration count</p>
+</div>
+
+<main>
+
+  <!-- ================================================================
+       This page now pulls its numbers LIVE from the two Google Sheets
+       behind the employer and student registration forms, via the
+       Apps Script "stats" endpoints configured below. It refreshes
+       automatically every 30 seconds and also has a manual Refresh
+       button. If the live endpoints can't be reached (e.g. before you
+       add the doGet stats function to your Apps Script projects — see
+       the two .gs files provided alongside this page), it falls back
+       to the FALLBACK_STATS numbers below, which you can still edit
+       by hand as a safety net.
+       ================================================================ -->
+
+  <div class="live-bar">
+    <span class="live-dot" id="liveDot"></span>
+    <span id="liveNote">Loading live data…</span>
+    <button class="refresh-btn" id="refreshBtn" type="button">Refresh now</button>
+  </div>
+
+  <div class="fallback-note" id="fallbackNote">
+    Couldn't reach the live registration data right now — showing the manually entered fallback figures below. Retrying automatically.
+  </div>
+
+  <div id="statsRoot"></div>
+
+  <h2 class="section-title">Students interested, by company</h2>
+  <div id="companyTableRoot"></div>
+
+</main>
+
+<footer>
+  S.I.W.S. College Placement Cell · Employment Mahakumbh Mela, 29 Sep 2026
+</footer>
+
+<script>
+  // ============================================================
+  // CONFIGURATION
+  // ============================================================
+
+  // Same Apps Script Web App URLs used by student-registration.html
+  // and index.html (the employer form). Update here if they change.
+  var STUDENT_SCRIPT_URL  = "https://script.google.com/macros/s/AKfycbxCqKuPfnC6FSRRM50IUGm0PHlhKD6QIAobHQjYCICJzVHVy7SmOZmNYm-_9j5vUJBo/exec";
+  var EMPLOYER_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyeuy4KWiiH_VRg3uew7w11WBs7u0Y-q6YqZBNeH45bKFB9saSjoHBd_VMOkTA3EmS-/exec";
+
+  // How often to auto-refresh the live figures (milliseconds).
+  var REFRESH_INTERVAL_MS = 30000;
+
+  // Used ONLY if the live endpoints above can't be reached — edit
+  // these by hand as a manual safety net, same as before.
+  var FALLBACK_STATS = {
+    lastUpdated: "18 September 2026, 6:00 PM",
+    companiesConfirmed: 0,
+    studentsRegistered: 0,
+    perCompany: {
+      // "Company Name Pvt Ltd": 0,
+      // "Another Company Ltd": 0,
+    }
+  };
+  // ============================================================
+
+  var STATS = FALLBACK_STATS;
+
+  function render(){
+    var root = document.getElementById('statsRoot');
+    var tentativeLine = STATS.companiesTentative
+      ? ('<div class="stat-sub">+' + STATS.companiesTentative + ' tentative</div>')
+      : '';
+    root.innerHTML =
+      '<div class="hero-stats">' +
+        '<div class="stat-card">' +
+          '<div class="stat-number">' + STATS.companiesConfirmed + '</div>' +
+          '<div class="stat-label">Companies participating</div>' +
+          tentativeLine +
+        '</div>' +
+        '<div class="stat-card accent">' +
+          '<div class="stat-number">' + STATS.studentsRegistered + '</div>' +
+          '<div class="stat-label">Students registered</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="updated-line">Last updated: ' + STATS.lastUpdated + '</div>';
+
+    var tableRoot = document.getElementById('companyTableRoot');
+    var entries = Object.keys(STATS.perCompany || {});
+    if(!entries.length){
+      tableRoot.innerHTML = '<div class="empty-note">Per-company counts will appear here once students start selecting companies.</div>';
+      return;
+    }
+    entries.sort(function(a,b){ return STATS.perCompany[b] - STATS.perCompany[a]; });
+    var rows = entries.map(function(name){
+      return '<tr><td>' + name + '</td><td class="count">' + STATS.perCompany[name] + '</td></tr>';
+    }).join('');
+    tableRoot.innerHTML =
+      '<table class="company-table">' +
+        '<thead><tr><th>Company</th><th style="text-align:right">Students interested</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>';
+  }
+
+  function fetchJSON(url){
+    if(!url){ return Promise.resolve(null); }
+    return fetch(url + (url.indexOf('?') > -1 ? '&' : '?') + 'stats=1')
+      .then(function(r){ if(!r.ok) throw new Error('bad status'); return r.json(); })
+      .catch(function(){ return null; });
+  }
+
+  function loadLiveStats(){
+    var dot = document.getElementById('liveDot');
+    var note = document.getElementById('liveNote');
+    var fallbackNote = document.getElementById('fallbackNote');
+    var btn = document.getElementById('refreshBtn');
+
+    dot.className = 'live-dot';
+    note.textContent = 'Refreshing…';
+    btn.disabled = true;
+
+    Promise.all([
+      fetchJSON(STUDENT_SCRIPT_URL),
+      fetchJSON(EMPLOYER_SCRIPT_URL)
+    ]).then(function(results){
+      var studentData = results[0];
+      var employerData = results[1];
+
+      if(!studentData && !employerData){
+        STATS = FALLBACK_STATS;
+        dot.className = 'live-dot off';
+        note.textContent = 'Live data unavailable';
+        fallbackNote.className = 'fallback-note show';
+      } else {
+        STATS = {
+          lastUpdated: new Date().toLocaleString('en-IN', {dateStyle:'medium', timeStyle:'short'}),
+          companiesConfirmed: employerData ? (employerData.companiesConfirmed || 0) : FALLBACK_STATS.companiesConfirmed,
+          companiesTentative: employerData ? (employerData.companiesTentative || 0) : 0,
+          studentsRegistered: studentData ? (studentData.studentsRegistered || 0) : FALLBACK_STATS.studentsRegistered,
+          perCompany: studentData ? (studentData.perCompany || {}) : FALLBACK_STATS.perCompany
+        };
+        dot.className = 'live-dot on';
+        note.textContent = 'Live — updated ' + STATS.lastUpdated;
+        fallbackNote.className = 'fallback-note';
+      }
+      render();
+      btn.disabled = false;
+    });
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', loadLiveStats);
+
+  render(); // show fallback immediately while first live fetch is in flight
+  loadLiveStats();
+  setInterval(loadLiveStats, REFRESH_INTERVAL_MS);
+</script>
+
+</body>
+</html>
