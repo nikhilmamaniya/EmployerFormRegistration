@@ -366,7 +366,7 @@
 <div class="wrap">
 
   <div class="intro">
-    <strong>Venue host: </strong><span id="collegeNameDisplay">S.I.W.S. College (Autonomous), Wadala </span> — is planning to organize a single-day district job fair on the occasion of the Hon'ble Prime Minister's birth anniversary, to be inaugurated by Hon'ble Chief Minister Shri Devendra Fadnavis. Please complete this form in one go — every field below is what we need to plan your participation, seating and interview slots, so we will not need to contact you again for the same information.
+    <strong>Venue host: </strong><span id="collegeNameDisplay">[Your College Name]</span> — a single-day district job fair on the occasion of the Hon'ble Prime Minister's birth anniversary, to be inaugurated by Hon'ble Chief Minister Shri Devendra Fadnavis. Please complete this form in one go — every field below is what we need to plan your participation, seating and interview slots, so we will not need to contact you again for the same information.
   </div>
 
   <form id="employerForm">
@@ -404,7 +404,6 @@
             <option>MSME</option>
             <option>Startup</option>
             <option>Government / PSU</option>
-<option>Other</option>
           </select>
         </div>
       </div>
@@ -538,6 +537,18 @@
           <span>I confirm the details above are accurate and consent to my organisation being listed among participating employers for this Mela. <span class="req">*</span></span>
         </label>
       </div>
+
+      <!-- Honeypot: hidden from real users, invisible bots often fill every field they find -->
+      <div style="position:absolute; left:-9999px; top:-9999px;" aria-hidden="true">
+        <label for="website_confirm">Leave this field empty</label>
+        <input type="text" id="website_confirm" name="website_confirm" tabindex="-1" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="humanCheck">Quick check: what is <span id="humanCheckQ"></span>? <span class="req">*</span></label>
+        <input type="text" id="humanCheck" inputmode="numeric" autocomplete="off" required style="max-width:120px;">
+        <span class="hint">Just confirming a person is filling this in, not a bot.</span>
+      </div>
     </fieldset>
 
     <div class="submit-row">
@@ -564,6 +575,13 @@
    pre-filled email draft instead.
    ============================================================ */
 var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyeuy4KWiiH_VRg3uew7w11WBs7u0Y-q6YqZBNeH45bKFB9saSjoHBd_VMOkTA3EmS-/exec";
+
+/* --- Basic anti-spam / anti-bot setup --- */
+var formLoadedAt = Date.now();
+var humanCheckA = Math.floor(Math.random() * 8) + 2;   // 2-9
+var humanCheckB = Math.floor(Math.random() * 8) + 2;   // 2-9
+var humanCheckAnswer = humanCheckA + humanCheckB;
+document.getElementById('humanCheckQ').textContent = humanCheckA + ' + ' + humanCheckB;
 
 var rolesContainer = document.getElementById('rolesContainer');
 var roleCount = 0;
@@ -666,6 +684,25 @@ function buildSummaryText(data){
 document.getElementById('employerForm').addEventListener('submit', function(e){
   e.preventDefault();
 
+  // Honeypot check: real users never see or fill this field
+  if(document.getElementById('website_confirm').value.trim() !== ''){
+    return; // silently drop — behaves like nothing happened, no hint given to the bot
+  }
+
+  // Timing check: genuine users take at least a few seconds to fill this form
+  var elapsedSeconds = (Date.now() - formLoadedAt) / 1000;
+  if(elapsedSeconds < 4){
+    alert('That was fast! Please take a moment to review your details before submitting.');
+    return;
+  }
+
+  // Simple math check
+  var humanAnswer = parseInt(document.getElementById('humanCheck').value, 10);
+  if(humanAnswer !== humanCheckAnswer){
+    alert('That answer doesn\'t look right — please recheck the simple sum above and try again.');
+    return;
+  }
+
   var data = {
     orgName: document.getElementById('orgName').value,
     sector: document.getElementById('sector').value,
@@ -735,6 +772,7 @@ document.getElementById('employerForm').addEventListener('submit', function(e){
   if(SCRIPT_URL){
     fetch(SCRIPT_URL, {
       method: 'POST',
+      mode: 'no-cors',
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
       body: JSON.stringify(data)
     }).then(function(){
